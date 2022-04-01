@@ -1,0 +1,20 @@
+install.packages("tidyverse")
+install.packages("writexl")
+
+library(tidyverse)
+library(readxl)
+library(writexl)
+
+########  Jayden
+wAV_try <- read_excel("wAV try.xlsx")
+View(wAV_try)
+
+draft_table <- wAV_try %>% group_by(pick) %>% summarise(mAV = mean(wAV), n = n())
+write_xlsx(draft_table, "C:\\Users\\jmeer\\OneDrive\\Desktop\\sports analytics R stuff\\wAV\\table.xlsx")
+
+
+
+
+######
+DomBB <- read_excel("DomBB.xlsx")
+player_team <- DomBB %>% group_by(Player, Team) %>% summarise(mWS = mean(WS)) 
