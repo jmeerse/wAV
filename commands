@@ -15,6 +15,31 @@ write_xlsx(draft_table, "C:\\Users\\jmeer\\OneDrive\\Desktop\\sports analytics R
 
 
 
-######
-DomBB <- read_excel("DomBB.xlsx")
-player_team <- DomBB %>% group_by(Player, Team) %>% summarise(mWS = mean(WS)) 
+###### make sure excel file has correct top row, and has GoRound column created, and has removed non-important rows (TOT, blank, extra writing)
+DomBB1 <- read_excel("DomBB.xlsx")
+names(DomBB1)[8] <- 'G' #column was named G...8, so this renames
+names(DomBB1)[3] <- 'Age'
+DomBB1 <- DomBB1[!is.na(DomBB1$G), ] #remove rows with blank games played
+
+#group players by teams and sum WS for each team, total number of games playes, and WS/game  -- edit this to reflect what you want to measure
+player_team <- DomBB1 %>% group_by(Player, Team, GoRound) %>% 
+  summarise(TotWS = sum(WS), games = sum(G), WSpG = TotWS/games) %>% 
+  ungroup() 
+  
+#get in chronological order 
+player_team<- player_team[order(player_team$Player, player_team$GoRound),]
+
+
+some graphs
+p1 <- player_team %>% 
+  ggplot(aes(x = factor(GoRound), y = WSpG, fill = GoRound)) +
+  geom_violin()
+
+p2 <- player_team %>% 
+  ggplot(aes(x = factor(GoRound), y = WSpG, fill = GoRound)) + 
+  geom_boxplot()
+
+p3 <- player_team %>% 
+  ggplot(aes(x = GoRound, y = WSpG)) + 
+  geom_point()
+
