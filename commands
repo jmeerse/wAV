@@ -16,30 +16,75 @@ write_xlsx(draft_table, "C:\\Users\\jmeer\\OneDrive\\Desktop\\sports analytics R
 
 
 ###### make sure excel file has correct top row, and has GoRound column created, and has removed non-important rows (TOT, blank, extra writing)
+#Dom
 DomBB1 <- read_excel("DomBB.xlsx")
+DomBB1 <- DomBB1[!(DomBB$Team == "TOT"),] #tot is when a player is on 2 or more teams in a season - don't need
 names(DomBB1)[8] <- 'G' #column was named G...8, so this renames
 names(DomBB1)[3] <- 'Age'
 DomBB1 <- DomBB1[!is.na(DomBB1$G), ] #remove rows with blank games played
 
-#group players by teams and sum WS for each team, total number of games playes, and WS/game  -- edit this to reflect what you want to measure
+#group players by teams and sum WS for each team, total number of games playes, and WS/game
 player_team <- DomBB1 %>% group_by(Player, Team, GoRound) %>% 
-  summarise(TotWS = sum(WS), games = sum(G), WSpG = TotWS/games) %>% 
+  summarise(TotWS = sum(WS), games = sum(G), WSpG = TotWS/games, fg = mean(`FG%`), pts = mean(PTS)) %>% 
   ungroup() 
-  
+
 #get in chronological order 
 player_team<- player_team[order(player_team$Player, player_team$GoRound),]
 
-
-some graphs
+#violin plot of WSpG by goround
 p1 <- player_team %>% 
   ggplot(aes(x = factor(GoRound), y = WSpG, fill = GoRound)) +
   geom_violin()
 
+#boxplot of WSpG by goround
 p2 <- player_team %>% 
   ggplot(aes(x = factor(GoRound), y = WSpG, fill = GoRound)) + 
   geom_boxplot()
 
+#scatterplot - does geom_line work?
 p3 <- player_team %>% 
-  ggplot(aes(x = GoRound, y = WSpG)) + 
-  geom_point()
+  ggplot(aes(x = GoRound, y = WSpG, group = Player)) + 
+  geom_point() + geom_line()
+p3
+
+#scatterplot with lines by player
+p4 <- player_team %>% 
+  ggplot(aes(x = GoRound, y = pts, group = Player)) + 
+  geom_point() + geom_line()
+p4
+
+#highlight a specific player
+player_team %>%
+  mutate( highlight=ifelse(Player=="Allen Iverson", "Iverson", "Other")) %>%
+  ggplot( aes(x=GoRound, y=pts, group=Player, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.2)) +
+  theme(legend.position="none") +
+  ggtitle("PPG as players move teams") +
+  theme_ipsum() +
+  #geom_label( x=2.5, y=30, label="Lebron James", size=4, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14)
+  )
+
+#multiple graphs
+tmp <- player_team %>%
+  mutate(Player2=Player)
+
+pts2 <- tmp[36:70,] %>% 
+  ggplot( aes(x=GoRound, y=pts)) +
+  geom_line( data=tmp %>% dplyr::select(-Player), aes(group=Player2), color="grey", size=0.5, alpha=0.5) +
+  geom_line( aes(color=Player), color="#69b3a2", size=1.2 )+
+  scale_color_viridis(discrete = TRUE) +
+  theme_ipsum() +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    panel.grid = element_blank()
+  ) +
+  ggtitle("All Players") +
+  facet_wrap(~Player)
+
 
