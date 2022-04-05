@@ -1,9 +1,14 @@
 install.packages("tidyverse")
 install.packages("writexl")
+install.packages("hrbrthemes")
+
 
 library(tidyverse)
 library(readxl)
 library(writexl)
+library(dplyr)
+library(hrbrthemes)
+library(viridis)
 
 ########  Jayden
 wAV_try <- read_excel("wAV try.xlsx")
