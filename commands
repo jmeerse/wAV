@@ -73,7 +73,7 @@ player_team %>%
 tmp <- player_team %>%
   mutate(Player2=Player)
 
-pts2 <- tmp[36:70,] %>% 
+pts2 <- tmp[36:70,] %>% #change numbers according to rows in player_team to get 9 players
   ggplot( aes(x=GoRound, y=pts)) +
   geom_line( data=tmp %>% dplyr::select(-Player), aes(group=Player2), color="grey", size=0.5, alpha=0.5) +
   geom_line( aes(color=Player), color="#69b3a2", size=1.2 )+
