@@ -10,86 +10,123 @@ library(dplyr)
 library(hrbrthemes)
 library(viridis)
 
-########  Jayden
-wAV_try <- read_excel("wAV try.xlsx")
-View(wAV_try)
+draft_pos <- read_excel("Jayden.xlsx")
+
+ave_pick <- Jayden %>% group_by(`pick pos`) %>% 
+  summarise(mean = mean(CAv, na.rm = TRUE), med = median(CAv, na.rm = TRUE)) %>% 
+  ungroup()
+p0_all <- Jayden %>% ggplot(aes(x = `pick pos`, y = CAv))+geom_point()
+p1_med <- ave_pick %>% ggplot(aes(x = `pick pos`, y = med))+geom_point()
+p2_mean <- ave_pick %>% ggplot(aes(x = `pick pos`, y = mean))+geom_point()
 
 draft_table <- wAV_try %>% group_by(pick) %>% summarise(mAV = mean(wAV), n = n())
 write_xlsx(draft_table, "C:\\Users\\jmeer\\OneDrive\\Desktop\\sports analytics R stuff\\wAV\\table.xlsx")
 
 
-
-
-###### make sure excel file has correct top row, and has GoRound column created, and has removed non-important rows (TOT, blank, extra writing)
 #Dom
 DomBB1 <- read_excel("DomBB.xlsx")
-DomBB1 <- DomBB1[!(DomBB$Team == "TOT"),] #tot is when a player is on 2 or more teams in a season - don't need
+DomBB1 <- DomBB1[!(DomBB1$Team == "TOT"),] #tot is when a player is on 2 or more teams in a season - don't need
 names(DomBB1)[8] <- 'G' #column was named G...8, so this renames
 names(DomBB1)[3] <- 'Age'
 DomBB1 <- DomBB1[!is.na(DomBB1$G), ] #remove rows with blank games played
 
 #group players by teams and sum WS for each team, total number of games playes, and WS/game
 player_team <- DomBB1 %>% group_by(Player, Team, GoRound) %>% 
-  summarise(TotWS = sum(WS), games = sum(G), WSpG = TotWS/games, fg = mean(`FG%`), pts = mean(PTS)) %>% 
+  summarise(TotWS = sum(WS), 
+            games = sum(G), 
+            WSpG = TotWS/games, 
+            fg = mean(`FG%`), 
+            pts = mean(PTS), 
+            usage = mean(`USG%`), 
+            PER = mean(PER)) %>% 
   ungroup() 
 
 #get in chronological order 
 player_team<- player_team[order(player_team$Player, player_team$GoRound),]
 
-#violin plot of WSpG by goround
 p1 <- player_team %>% 
   ggplot(aes(x = factor(GoRound), y = WSpG, fill = GoRound)) +
   geom_violin()
 
-#boxplot of WSpG by goround
 p2 <- player_team %>% 
   ggplot(aes(x = factor(GoRound), y = WSpG, fill = GoRound)) + 
   geom_boxplot()
 
-#scatterplot - does geom_line work?
 p3 <- player_team %>% 
   ggplot(aes(x = GoRound, y = WSpG, group = Player)) + 
   geom_point() + geom_line()
 p3
 
-#scatterplot with lines by player
 p4 <- player_team %>% 
   ggplot(aes(x = GoRound, y = pts, group = Player)) + 
   geom_point() + geom_line()
 p4
 
 #highlight a specific player
-player_team %>%
+pts <- player_team %>%
   mutate( highlight=ifelse(Player=="Allen Iverson", "Iverson", "Other")) %>%
   ggplot( aes(x=GoRound, y=pts, group=Player, color=highlight, size=highlight)) +
   geom_line() +
   scale_color_manual(values = c("#69b3a2", "lightgrey")) +
   scale_size_manual(values=c(1.5,0.2)) +
-  theme(legend.position="none") +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10)) + 
   ggtitle("PPG as players move teams") +
   theme_ipsum() +
-  #geom_label( x=2.5, y=30, label="Lebron James", size=4, color="#69b3a2") +
+  geom_label( x=5, y=15, label="Allen Iverson", size=4, color="#69b3a2") +
   theme(
     legend.position="none",
-    plot.title = element_text(size=14)
+    plot.title = element_text(size=14),
+    panel.grid.minor.x = element_blank()
   )
 
 #multiple graphs
 tmp <- player_team %>%
   mutate(Player2=Player)
-
-pts2 <- tmp[36:70,] %>% #change numbers according to rows in player_team to get 9 players
+#points per game by player by team
+pts7 <- tmp[231:248,] %>% #change numbers according to rows in player_team to get 9 players
   ggplot( aes(x=GoRound, y=pts)) +
   geom_line( data=tmp %>% dplyr::select(-Player), aes(group=Player2), color="grey", size=0.5, alpha=0.5) +
-  geom_line( aes(color=Player), color="#69b3a2", size=1.2 )+
+  geom_line( aes(color=Player), color="#69b3a2", size=1.2 ) +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10)) + 
   scale_color_viridis(discrete = TRUE) +
   theme_ipsum() +
   theme(
     legend.position="none",
     plot.title = element_text(size=14),
-    panel.grid = element_blank()
+    panel.grid = element_blank(),
+    panel.grid.minor.x = element_blank()
   ) +
-  ggtitle("All Players") +
+  ggtitle("Players A - Z PPG by Team") +
   facet_wrap(~Player)
 
+div9 <-c(1,35,36,70,71,114,115,152,153,192,193,230,231,248) #rows containing 9 players
+#winshares per game by player
+wspg4 <- tmp[115:152,] %>% #change numbers according to rows in player_team to get 9 players
+  ggplot( aes(x=GoRound, y=WSpG)) +
+  geom_line( data=tmp %>% dplyr::select(-Player), aes(group=Player2), color="grey", size=0.5, alpha=0.5) +
+  geom_line( aes(color=Player), color="#69b3a2", size=1.2 ) +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10)) + 
+  scale_color_viridis(discrete = TRUE) +
+  theme_ipsum() +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    panel.grid = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) +
+  ggtitle("Players A - Z Win Shares per Game by Team") +
+  facet_wrap(~Player)
+
+#more stats as players move teams
+by_team <- tmp %>% 
+  group_by(GoRound) %>% 
+  summarise(PPG = mean(pts, na.rm = TRUE), 
+            WSperG = mean(WSpG, na.rm = TRUE), 
+            fgpg = mean(fg, na.rm = TRUE), 
+            aveWS = mean(TotWS, na.rm = TRUE),
+            PER = mean(PER, na.rm = TRUE),
+            USE = mean(usage, na.rm = TRUE),
+            NumPlayers = n()
+            ) %>% 
+  ungroup()
 
