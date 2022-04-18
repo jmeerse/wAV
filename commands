@@ -25,7 +25,6 @@ write_xlsx(draft_table, "C:\\Users\\jmeer\\OneDrive\\Desktop\\sports analytics R
 
 #Dom
 DomBB1 <- read_excel("DomBB.xlsx")
-DomBB1 <- DomBB1[!(DomBB1$Team == "TOT"),] #tot is when a player is on 2 or more teams in a season - don't need
 names(DomBB1)[8] <- 'G' #column was named G...8, so this renames
 names(DomBB1)[3] <- 'Age'
 DomBB1 <- DomBB1[!is.na(DomBB1$G), ] #remove rows with blank games played
